@@ -6,6 +6,11 @@ For this build we are using the In-Tree method described [here](https://coral.ai
 Once you have setup the coral micro directory, then you can clone this repo into the `apps` directory.
 
 
+Oh and you'll need to edit the linker script to increse m_text size. `libs/nxp/rt1176-sdk/MIMXRT1176xxxxx_cm7_ram.ld`
+```ld
+  m_text                (RX)  : ORIGIN = 0x00000c00, LENGTH = 0x0007F400  /* Increased to about 508KB */
+```
+
 
 
 ## Build the application
