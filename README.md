@@ -6,10 +6,27 @@ For this build we are using the In-Tree method described [here](https://coral.ai
 Once you have setup the coral micro directory, then you can clone this repo into the `apps` directory.
 
 
+
+
 ## Build the application
 
-Once your code is setup and you have updated the [CMakeLists.txt](CMakeLists.txt) file, you can build the application by running the following commands:
+Update the CMakeLists.txt file in the `coral_in_tree_VL53L8_i2c` directory to include the necessary libraries:
+```cmake
+add_executable_m7(coral_in_tree_VL53L8_i2c
+    src/main.cc
+)
 
+target_link_libraries(coral_in_tree_VL53L8_i2c
+    libs_base-m7_freertos
+)
+```
+
+Then add the project to the `app` directory CMakeLists.txt file:
+```cmake
+add_subdirectory(coral_in_tree_VL53L8_i2c)
+```
+
+Now you should be able to build the application by running the following command:
 ```bash
 bash build.sh
 ```
