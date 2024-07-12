@@ -46,8 +46,17 @@ python3 scripts/flashtool.py --app coral_in_tree_VL53L8_i2c
 
 ## Run the application
 
-The serial output can be viewed by running the following command, where the `dev` path depends on your board:
+Check the baud with:
 ```bash
-screen /dev/serial/by-id/usb-Google_Coral_Dev_Board_Micro_XXX 9600
+stty -F /dev/ttyACM0 
 ```
+
+
+The serial output can be viewed by running the following command:
+
+```bash
+screen /dev/ACM0 115200
+```
+
+Exit with `Ctrl+A` then `K` then `Y
 
