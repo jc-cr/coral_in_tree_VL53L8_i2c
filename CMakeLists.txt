@@ -5,6 +5,11 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 add_executable_m7(coral_in_tree_VL53L8_i2c
     src/main.cpp
+   # src/i2c_test.cpp
+)
+
+target_include_directories(coral_in_tree_VL53L8_i2c PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 target_compile_options(coral_in_tree_VL53L8_i2c PRIVATE

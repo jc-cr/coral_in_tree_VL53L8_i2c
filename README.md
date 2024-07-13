@@ -55,7 +55,7 @@ stty -F /dev/ttyACM0
 The serial output can be viewed by running the following command:
 
 ```bash
-screen /dev/ACM0 115200
+screen -L /dev/ttyACM0 115200
 ```
 
 Exit with `Ctrl+A` then `K` then `Y
