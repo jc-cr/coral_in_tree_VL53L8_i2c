@@ -1,3 +1,0 @@
-[submodule "libs/VL53L8CX"]
-	path = libs/VL53L8CX
-	url = git@github.com:jc-cr/VL53L8CX.git
