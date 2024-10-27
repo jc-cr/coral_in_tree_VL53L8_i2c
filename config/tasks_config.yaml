@@ -1,0 +1,9 @@
+---
+Task1:
+  TaskName: "TOF_Task"
+  TaskEntryPtr: "tof_task"
+  PeriodicityInMS: 33
+  ParametersPtr: 0
+  StackSize: STACK_SIZE_MEDIUM 
+  TaskPriority: 3
+  TaskHandle: "nullptr"

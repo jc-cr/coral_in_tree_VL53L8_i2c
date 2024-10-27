@@ -6,11 +6,6 @@ For this build we are using the In-Tree method described [here](https://coral.ai
 Once you have setup the coral micro directory, then you can clone this repo into the `apps` directory.
 
 
-Oh and you'll need to edit the linker script to increse m_text size. `libs/nxp/rt1176-sdk/MIMXRT1176xxxxx_cm7_ram.ld`
-```ld
-  m_text                (RX)  : ORIGIN = 0x00000c00, LENGTH = 0x0007F400  /* Increased to about 508KB */
-```
-
 
 
 ## Build the application
@@ -46,17 +41,24 @@ python3 scripts/flashtool.py --app coral_in_tree_VL53L8_i2c
 
 ## Run the application
 
-Check the baud with:
+I recommend using a tty-to-usb adapter to connect to the Coral Dev Board. 
+Using one your can view the serial output with the following command:
+
 ```bash
-stty -F /dev/ttyACM0 
+picocom -b 115200 /dev/ttyUSB0
+```
+
+Exit with:
+```
+Ctrl-a Ctrl-x
 ```
 
 
-The serial output can be viewed by running the following command:
+## Tips
 
-```bash
-screen -L /dev/ttyACM0 115200
+You may need to edit the linker script to increase m_text size.
+`libs/nxp/rt1176-sdk/MIMXRT1176xxxxx_cm7_ram.ld`
+
+```ld
+  m_text                (RX)  : ORIGIN = 0x00000c00, LENGTH = 0x0007F400  /* Increased to about 508KB */
 ```
-
-Exit with `Ctrl+A` then `K` then `Y
-
