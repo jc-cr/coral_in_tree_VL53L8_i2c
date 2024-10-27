@@ -3,25 +3,16 @@
 ## Setup
 
 For this build we are using the In-Tree method described [here](https://coral.ai/docs/dev-board-micro/freertos/#freertos-tasks).
-Once you have setup the coral micro directory, then you can clone this repo into the `apps` directory.
-
-
+Once you have setup the coral micro directory, then you can clone this repo into the `apps` directory with all submodules.
+```bash
+cd coralmicro/apps
+git clone https://github.com/jc-cr/coral_in_tree_VL53L8_i2c.git --recurse-submodules
+```
 
 
 ## Build the application
 
-Update the CMakeLists.txt file in the `coral_in_tree_VL53L8_i2c` directory to include the necessary libraries:
-```cmake
-add_executable_m7(coral_in_tree_VL53L8_i2c
-    src/main.cc
-)
-
-target_link_libraries(coral_in_tree_VL53L8_i2c
-    libs_base-m7_freertos
-)
-```
-
-Then add the project to the `app` directory CMakeLists.txt file:
+Update the project to the `app` directory CMakeLists.txt file:
 ```cmake
 add_subdirectory(coral_in_tree_VL53L8_i2c)
 ```
@@ -41,7 +32,7 @@ python3 scripts/flashtool.py --app coral_in_tree_VL53L8_i2c
 
 ## Run the application
 
-I recommend using a tty-to-usb adapter to connect to the Coral Dev Board. 
+I recommend using a USB to Serial adapter to connect to the Coral Dev Board. 
 Using one your can view the serial output with the following command:
 
 ```bash

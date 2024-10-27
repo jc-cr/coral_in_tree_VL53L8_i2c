@@ -4,7 +4,7 @@
 #include "libs/base/utils.h"
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
 #include "third_party/freertos_kernel/include/task.h"
-#include "libs/VL53L8CX/src/vl53l8cx.h"
+#include "VL53L8CX/include/vl53l8cx.h"
 
 namespace coralmicro {
 

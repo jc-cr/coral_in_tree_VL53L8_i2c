@@ -13,6 +13,9 @@ else()
     message(WARNING "IPO/LTO not supported: ${error}")
 endif()
 
+# Add VL53L8CX library subdirectory
+add_subdirectory(libs/VL53L8CX)
+
 # Compiler flags optimization
 set(COMPILER_OPTIMIZATION_FLAGS
     -Os                     # Optimize for size
@@ -71,19 +74,18 @@ add_custom_target(${PROJECT_NAME}_generate_task_config
 # Add the executable and make it depend on task configuration
 add_executable_m7(${PROJECT_NAME}
     src/main.cc
-
     ${TASK_CONFIG_SOURCE}
     ${TASK_SOURCES}
 )
 
 # Add dependency on task configuration generation
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_task_config
-)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_task_config)
 
 # Set include directories
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/VL53L8CX/include
 )
 
 # Apply compiler flags
@@ -102,5 +104,5 @@ target_link_options(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         libs_base-m7_freertos
-        libs_vl53l8cx
+        VL53L8CX
 )
