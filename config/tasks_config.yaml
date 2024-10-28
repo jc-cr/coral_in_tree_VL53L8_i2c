@@ -4,6 +4,6 @@ Task1:
   TaskEntryPtr: "tof_task"
   PeriodicityInMS: 33
   ParametersPtr: 0
-  StackSize: "32 * 1024"
+  StackSize: 32 * 1024
   TaskPriority: 3
   TaskHandle: "nullptr"
