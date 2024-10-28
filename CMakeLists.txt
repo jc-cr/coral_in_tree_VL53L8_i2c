@@ -33,6 +33,7 @@ set(COMPILER_OPTIMIZATION_FLAGS
 # Linker flags optimization
 set(LINKER_OPTIMIZATION_FLAGS
     -Wl,-Map=output.map
+    -Wl,--print-memory-usage
     -Wl,--gc-sections    # Garbage collect unused sections
     -Wl,--print-memory-usage
     -Wl,--sort-section=alignment # Sort sections by alignment

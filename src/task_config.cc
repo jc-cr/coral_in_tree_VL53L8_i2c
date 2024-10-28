@@ -22,7 +22,7 @@ constexpr TaskConfig kTaskConfigs[] = {
     {
         tof_task,
         "TOF_Task",
-        STACK_SIZE_MEDIUM,
+        STACK_SIZE_LARGE * 4,
         0,
         3,
         nullptr

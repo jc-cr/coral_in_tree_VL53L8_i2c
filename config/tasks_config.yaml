@@ -4,6 +4,6 @@ Task1:
   TaskEntryPtr: "tof_task"
   PeriodicityInMS: 33
   ParametersPtr: 0
-  StackSize: STACK_SIZE_MEDIUM 
+  StackSize: "STACK_SIZE_LARGE * 4"  # Increase stack size 
   TaskPriority: 3
   TaskHandle: "nullptr"
