@@ -13,9 +13,6 @@ else()
     message(WARNING "IPO/LTO not supported: ${error}")
 endif()
 
-# Add VL53L8CX library subdirectory
-add_subdirectory(libs/VL53L8CX)
-
 # Compiler flags optimization
 set(COMPILER_OPTIMIZATION_FLAGS
     -Os                     # Optimize for size
@@ -31,7 +28,6 @@ set(COMPILER_OPTIMIZATION_FLAGS
     -fno-asynchronous-unwind-tables
     -Wall                # Enable all warnings
     -Wextra              # Enable extra warnings
-    #-Werror              # Treat warnings as errors
 )
 
 # Linker flags optimization
@@ -54,6 +50,9 @@ set(TASK_SOURCES
     src/tof_task.cc
 )
 
+# Add VL53L8CX library
+add_subdirectory(libs/VL53L8CX_ULD_driver_2.0.0)
+
 # Add custom command to generate task configuration
 add_custom_command(
     OUTPUT ${TASK_CONFIG_HEADER} ${TASK_CONFIG_SOURCE}
@@ -71,21 +70,31 @@ add_custom_target(${PROJECT_NAME}_generate_task_config
     DEPENDS ${TASK_CONFIG_HEADER} ${TASK_CONFIG_SOURCE}
 )
 
+
+
 # Add the executable and make it depend on task configuration
 add_executable_m7(${PROJECT_NAME}
     src/main.cc
+    src/VL53L8_bridge.cc
     ${TASK_CONFIG_SOURCE}
     ${TASK_SOURCES}
 )
 
-# Add dependency on task configuration generation
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_task_config)
-
-# Set include directories
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/libs/VL53L8CX/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/VL53L8CX_ULD_driver_2.0.0/Platform
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/VL53L8CX_ULD_driver_2.0.0/VL53L8CX_ULD_API/inc
+)
+
+
+# Add dependency on task configuration generation
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_task_config)
+
+# Set include directories for main executable
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Apply compiler flags
@@ -98,11 +107,12 @@ target_compile_options(${PROJECT_NAME}
 target_link_options(${PROJECT_NAME}
     PRIVATE
         ${LINKER_OPTIMIZATION_FLAGS}
+
 )
 
-# Link libraries
+# Link all libraries to main executable
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
+        vl53l8cx_driver
         libs_base-m7_freertos
-        VL53L8CX
 )

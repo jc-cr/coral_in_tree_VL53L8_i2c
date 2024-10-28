@@ -22,20 +22,19 @@ namespace {
         // These files should be automatically generated when running CMakeLists.txt
         TaskErr_t ret = CreateAllTasks();
         if (ret != TaskErr_t::OK) {
-            printf("Failed to initialize all tasks\r\n");
+            printf("Failed to generated all tasks\r\n");
             
             // Suspend main task
             vTaskSuspend(nullptr);
         }
         else {
-            printf("All tasks initialized successfully\r\n");
+            printf("All tasks generated successfully\r\n");
         }
     }
     
-
     [[noreturn]] void Main() {
-        printf("%s\r\n", PROJECT_NAME);
-        printf("Developed by JC \r\n");
+        printf("\n%s\n", PROJECT_NAME);
+        printf("Developed by JC \n");
         printf("%s\n", PROJECT_LOGO);
 
         // Turn on Status LED to show the board is on
@@ -45,7 +44,8 @@ namespace {
 
         setup_tasks();
 
-        printf("Starting Human Detection Application\r\n");
+        printf("Starting %s Tasks\n", PROJECT_NAME);
+
         // Main loop
         while (true) {
             taskYIELD();
