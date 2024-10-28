@@ -1,12 +1,17 @@
-#include "tof_task.hh"
+// main_cm7.cc
+#include "VL53L8_bridge.hh"
+#include "libs/base/led.h"
 
 namespace coralmicro {
+namespace {
 
-    void tof_task(void* parameters) {
-        (void)parameters;
-
-        // Simple initial delay
-        vTaskDelay(pdMS_TO_TICKS(500));  // Longer initial delay
+[[noreturn]] void Main() {
+    printf("Starting VL53L8 example...\r\n");
+    fflush(stdout);
+    
+    // Turn on Status LED
+    LedSet(Led::kStatus, true);
+    
         
         printf("TOF task created and starting...\r\n");
         fflush(stdout);
@@ -57,4 +62,11 @@ namespace coralmicro {
             vTaskDelay(xDelay);
         }
     }
+
+} // namespace
 } // namespace coralmicro
+
+extern "C" void app_main(void* param) {
+    (void)param;
+    coralmicro::Main();
+}

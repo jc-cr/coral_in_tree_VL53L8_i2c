@@ -84,114 +84,104 @@ extern "C" {
 
 } // extern "C"
 
+
+
 namespace coralmicro {
 
+// Static member initialization
+I2cConfig VL53L8Bridge::i2c_config_;
+VL53L8CX_Configuration VL53L8Bridge::sensor_config_;
+bool VL53L8Bridge::initialized_ = false;
 
-    // Static member initialization
-    I2cConfig VL53L8Bridge::i2c_config_;
-    VL53L8CX_Configuration VL53L8Bridge::sensor_config_;
-    bool VL53L8Bridge::initialized_ = false;
+bool VL53L8Bridge::initialize() {
+    if (initialized_) return true;
 
-    bool VL53L8Bridge::initialize() {
-        if (initialized_) return true;
+    // Ensure buffers are properly aligned
+    assert(((uintptr_t)VL53L8CX_FIRMWARE & 0x1F) == 0);
+    assert(((uintptr_t)VL53L8CX_DEFAULT_CONFIGURATION & 0x1F) == 0);
+    
+    // Initialize GPIO first
+    GpioSetMode(kLpnPin, GpioMode::kOutput);
+    GpioSet(kLpnPin, false);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    GpioSet(kLpnPin, true);
+    vTaskDelay(pdMS_TO_TICKS(10));
 
-        printf("Initializing VL53L8CX sensor...\n");
-        fflush(stdout);
-
-        // Configure GPIO
-        GpioSetMode(kLpnPin, GpioMode::kOutput);
-        GpioSet(kLpnPin, false);  // Reset
-        vTaskDelay(pdMS_TO_TICKS(10));
-        GpioSet(kLpnPin, true);   // Enable
-        vTaskDelay(pdMS_TO_TICKS(10));
-
-        if (!init_I2C()) {
-            printf("Failed to initialize I2C\n");
-            fflush(stdout);
-            return false;
-        }
-
-        if (!configure_sensor()) {
-            printf("Failed to configure sensor\n");
-            fflush(stdout);
-            return false;
-        }
-
-        initialized_ = true;
-        printf("VL53L8CX initialization complete\n");
-        fflush(stdout);
-        return true;
+    // Then I2C
+    if (!init_I2C()) {
+        return false;
     }
 
+    // Setup platform after I2C is ready
+    sensor_config_.platform.address = 0x52;
+    sensor_config_.platform.platform_handle = &i2c_config_;
 
-    bool VL53L8Bridge::init_I2C() {
-        i2c_config_ = I2cGetDefaultConfig(kI2c);
-        return I2cInitController(i2c_config_);
+    return finalize_initialization();
+}
+
+bool VL53L8Bridge::finalize_initialization() {
+    // Check sensor responsiveness
+    uint8_t is_alive = 0;
+    for (int i = 0; i < 3; i++) {
+        if (vl53l8cx_is_alive(&sensor_config_, &is_alive) == 0 && is_alive) {
+            break;
+        }
+        vTaskDelay(pdMS_TO_TICKS(100));
+        if (i == 2) return false;
     }
 
-    bool VL53L8Bridge::configure_sensor() {
-        // Setup platform
-        sensor_config_.platform.address = VL53L8CX_DEFAULT_I2C_ADDRESS;
-        sensor_config_.platform.platform_handle = &i2c_config_;
-
-        // Check if sensor is responsive
-        uint8_t is_alive;
-        if (vl53l8cx_is_alive(&sensor_config_, &is_alive) || !is_alive) {
-            printf("VL53L8CX not detected\n");
-            return false;
-        }
-
-        // Initialize sensor
-        if (vl53l8cx_init(&sensor_config_)) {
-            printf("VL53L8CX initialization failed\n");
-            return false;
-        }
-
-        // Configure for 4x4 resolution
-        if (vl53l8cx_set_resolution(&sensor_config_, VL53L8CX_RESOLUTION_4X4)) {
-            printf("Failed to set resolution\n");
-            return false;
-        }
-
-        // Set ranging frequency to 10Hz
-        if (vl53l8cx_set_ranging_frequency_hz(&sensor_config_, 10)) {
-            printf("Failed to set ranging frequency\n");
-            return false;
-        }
-
-        return true;
+    if (vl53l8cx_init(&sensor_config_) || 
+        vl53l8cx_set_resolution(&sensor_config_, VL53L8CX_RESOLUTION_4X4) ||
+        vl53l8cx_set_ranging_frequency_hz(&sensor_config_, 1)) {
+        return false;
     }
 
-    bool VL53L8Bridge::start_ranging() {
-        if (!initialized_) return false;
-        return vl53l8cx_start_ranging(&sensor_config_) == 0;
-    }
+    initialized_ = true;
+    return true;
+}
 
-    bool VL53L8Bridge::stop_ranging() {
-        if (!initialized_) return false;
-        return vl53l8cx_stop_ranging(&sensor_config_) == 0;
-    }
+bool VL53L8Bridge::init_I2C() {
+    printf("I2C configuration starting\r\n");
+    fflush(stdout);
+    
+    i2c_config_ = I2cGetDefaultConfig(kI2c);
+    bool success = I2cInitController(i2c_config_);
+    
+    printf("I2C initialization %s\r\n", success ? "successful" : "failed");
+    fflush(stdout);
+    return success;
+}
 
-    bool VL53L8Bridge::get_latest_distance(VL53L8CX_ResultsData* results) {
-        if (!initialized_) return false;
-        
-        uint8_t isReady;
-        if (vl53l8cx_check_data_ready(&sensor_config_, &isReady)) {
-            return false;
-        }
-        
-        if (!isReady) {
-            return false;
-        }
-        
-        return vl53l8cx_get_ranging_data(&sensor_config_, results) == 0;
-    }
+bool VL53L8Bridge::start_ranging() {
+    if (!initialized_) return false;
+    return vl53l8cx_start_ranging(&sensor_config_) == 0;
+}
 
-    void VL53L8Bridge::deinitialize() {
-        if (!initialized_) return;
-        
-        stop_ranging();
-        initialized_ = false;
+bool VL53L8Bridge::stop_ranging() {
+    if (!initialized_) return false;
+    return vl53l8cx_stop_ranging(&sensor_config_) == 0;
+}
+
+bool VL53L8Bridge::get_latest_distance(VL53L8CX_ResultsData* results) {
+    if (!initialized_) return false;
+    
+    uint8_t isReady;
+    if (vl53l8cx_check_data_ready(&sensor_config_, &isReady)) {
+        return false;
     }
+    
+    if (!isReady) {
+        return false;
+    }
+    
+    return vl53l8cx_get_ranging_data(&sensor_config_, results) == 0;
+}
+
+void VL53L8Bridge::deinitialize() {
+    if (!initialized_) return;
+    
+    stop_ranging();
+    initialized_ = false;
+}
 
 } // namespace coralmicro
