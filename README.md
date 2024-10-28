@@ -43,13 +43,3 @@ Exit with:
 ```
 Ctrl-a Ctrl-x
 ```
-
-
-## Tips
-
-You may need to edit the linker script to increase m_text size.
-`libs/nxp/rt1176-sdk/MIMXRT1176xxxxx_cm7_ram.ld`
-
-```ld
-  m_text                (RX)  : ORIGIN = 0x00000c00, LENGTH = 0x0007F400  /* Increased to about 508KB */
-```
