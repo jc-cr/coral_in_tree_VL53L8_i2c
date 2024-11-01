@@ -1,13 +1,23 @@
 #pragma once
+#include "libs/base/gpio.h"
+#include "libs/base/i2c.h"
+#include "vl53l8cx_api.h"
+#include "platform.h"
 
 #include "third_party/freertos_kernel/include/FreeRTOS.h"
 #include "third_party/freertos_kernel/include/task.h"
-#include "VL53L8_bridge.hh"
 
 namespace coralmicro {
-    // Increased stack size for firmware loading
-    constexpr uint32_t kTofTaskStackSize = 8192;
-    constexpr uint8_t kTofTaskPriority = 5;
-
     void tof_task(void* parameters);
+
+
+    bool init_gpio();
+
+    const char* getErrorString(uint8_t status);
+    void printSensorError(const char* operation, uint8_t status);
+
+    static constexpr Gpio ki2cEnPin = Gpio::kScl6;
+    static constexpr Gpio kLpnPin = Gpio::kUartCts;
+    static constexpr I2c kI2c = I2c::kI2c1;
+
 }
