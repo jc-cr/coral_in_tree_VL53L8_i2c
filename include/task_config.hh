@@ -8,6 +8,8 @@
 
 #include <cstdio>
 
+// configMINIMAL_STACK_SIZE is 360 bytes
+// configMAX_PRIORITIES is 5
 namespace coralmicro {
 
 // Task priorities (configMAX_PRIORITIES = 5)

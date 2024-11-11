@@ -447,15 +447,15 @@ SECTIONS
     __heap_limit = .; /* Add for _sbrk */
   } > m_heap
 
-  .vl53l8_buffers (NOLOAD) :
+  .vl53l8_buffers : ALIGN(32)
   {
-      . = ALIGN(32);
-      __vl53l8_buffers_start = .;
-      *(.vl53l8_buffers*)
-      . = ALIGN(32);
-      __vl53l8_buffers_end = .;
-  } > m_sdram
-  
+    __vl53l8_buffers_start = .;
+    *(.vl53l8_buffers*)
+    . = ALIGN(32);
+    __vl53l8_buffers_end = .;
+  } > m_sdram  /* Place in SDRAM */
+
+
   .stack :
   {
     . = ALIGN(8);

@@ -70,7 +70,6 @@ extern "C" void app_main(void* param) {
     (void)param;
     
     printf("Pre-main initialization\r\n");
-    fflush(stdout);
     
     coralmicro::Main();
 

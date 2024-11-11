@@ -5,5 +5,5 @@ Task1:
   PeriodicityInMS: 33
   ParametersPtr: 0
   StackSize: 32 * 1024
-  TaskPriority: 3
+  TaskPriority: 4
   TaskHandle: "nullptr"
