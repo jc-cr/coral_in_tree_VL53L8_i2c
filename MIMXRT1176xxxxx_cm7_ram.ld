@@ -449,11 +449,12 @@ SECTIONS
 
   .vl53l8_buffers : ALIGN(32)
   {
-    __vl53l8_buffers_start = .;
-    *(.vl53l8_buffers*)
-    . = ALIGN(32);
-    __vl53l8_buffers_end = .;
-  } > m_sdram  /* Place in SDRAM */
+      . = ALIGN(32);
+      __vl53l8_buffers_start = .;
+      *(.vl53l8_buffers*)
+      . = ALIGN(32);
+      __vl53l8_buffers_end = .;
+  } > m_sdram
 
 
   .stack :

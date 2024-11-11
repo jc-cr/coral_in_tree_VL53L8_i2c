@@ -71,6 +71,8 @@ target_compile_options(${PROJECT_NAME}
         -fno-asynchronous-unwind-tables
         -Wall
         -Wextra
+        $<$<COMPILE_LANGUAGE:C>:-std=c11>
+        $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
 )
 
 # Apply linker flags

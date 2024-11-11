@@ -11,9 +11,9 @@ namespace coralmicro {
         
         // Reset sequence
         GpioSet(kLpnPin, false);  // Assert reset
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(100));  // Increased delay
         GpioSet(kLpnPin, true);   // Release reset
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(100));  // Increased delay
         
         printf("GPIO initialization complete\r\n");
         return true;
@@ -52,9 +52,14 @@ namespace coralmicro {
         fflush(stdout);
     }
 
+    // In tof_task.cc, modify the initializeSensor function:
+
     bool initializeSensor(VL53L8CX_Configuration* dev) {
         uint8_t status;
         uint8_t isAlive = 0;
+        
+        // Add delay after power-on
+        vTaskDelay(pdMS_TO_TICKS(10));
         
         // Check if sensor is alive
         status = vl53l8cx_is_alive(dev, &isAlive);
@@ -64,6 +69,9 @@ namespace coralmicro {
         }
         printf("Sensor is alive\r\n");
         
+        // Add delay before initialization
+        vTaskDelay(pdMS_TO_TICKS(10));
+        
         // Initialize sensor
         status = vl53l8cx_init(dev);
         if (status != VL53L8CX_STATUS_OK) {
@@ -71,6 +79,9 @@ namespace coralmicro {
             return false;
         }
         printf("Sensor initialized\r\n");
+        
+        // Add delay after initialization
+        vTaskDelay(pdMS_TO_TICKS(100));
         
         // Set resolution
         status = vl53l8cx_set_resolution(dev, kResolution);
@@ -80,6 +91,19 @@ namespace coralmicro {
         }
         printf("Resolution set to 8x8\r\n");
         
+        // Add delay between configuration steps
+        vTaskDelay(pdMS_TO_TICKS(10));
+        
+        // Set ranging mode to continuous
+        status = vl53l8cx_set_ranging_mode(dev, VL53L8CX_RANGING_MODE_CONTINUOUS);
+        if (status != VL53L8CX_STATUS_OK) {
+            printSensorError("setting ranging mode", status);
+            return false;
+        }
+        printf("Ranging mode set to continuous\r\n");
+        
+        vTaskDelay(pdMS_TO_TICKS(10));
+        
         // Set ranging frequency
         status = vl53l8cx_set_ranging_frequency_hz(dev, kRangingFrequency);
         if (status != VL53L8CX_STATUS_OK) {
@@ -88,6 +112,8 @@ namespace coralmicro {
         }
         printf("Ranging frequency set to %d Hz\r\n", kRangingFrequency);
         
+        vTaskDelay(pdMS_TO_TICKS(10));
+        
         // Set integration time
         status = vl53l8cx_set_integration_time_ms(dev, kIntegrationTime);
         if (status != VL53L8CX_STATUS_OK) {
@@ -95,6 +121,9 @@ namespace coralmicro {
             return false;
         }
         printf("Integration time set to %d ms\r\n", kIntegrationTime);
+        
+        // Final delay before returning
+        vTaskDelay(pdMS_TO_TICKS(50));
         
         return true;
     }
@@ -128,25 +157,14 @@ namespace coralmicro {
         printf("TOF task starting...\r\n");
         fflush(stdout);
         
-        // Initialize GPIO with retry
-        int gpio_retries = 3;
-        bool gpio_initialized = false;
-        while (gpio_retries-- > 0 && !gpio_initialized) {
-            gpio_initialized = init_gpio();
-            if (!gpio_initialized) {
-                printf("GPIO init retry %d...\r\n", 3 - gpio_retries);
-                vTaskDelay(pdMS_TO_TICKS(100));
-            }
-        }
-        
-        if (!gpio_initialized) {
-            printf("GPIO initialization failed after retries\r\n");
+        if (!init_gpio()) {
+            printf("GPIO initialization failed\r\n");
             return;
         }
         
         // Platform initialization with proper cleanup
         VL53L8CX_Platform platform = {};
-        if (!vl53l8cx::PlatformInit(&platform)) {
+        if (!vl53l8cx::PlatformInit(&platform, kI2c, kAddress)) {
             printf("Platform initialization failed\r\n");
             return;
         }
@@ -160,19 +178,9 @@ namespace coralmicro {
         
         dev->platform = platform;
         
-        // Initialize sensor with retry mechanism
-        int sensor_retries = 3;
-        bool sensor_initialized = false;
-        while (sensor_retries-- > 0 && !sensor_initialized) {
-            sensor_initialized = initializeSensor(dev.get());
-            if (!sensor_initialized) {
-                printf("Sensor init retry %d...\r\n", 3 - sensor_retries);
-                vTaskDelay(pdMS_TO_TICKS(100));
-            }
-        }
         
-        if (!sensor_initialized) {
-            printf("Sensor initialization failed after retries\r\n");
+        if (!initializeSensor(dev.get())) {
+            printf("Sensor initialization failed - exiting task\r\n");
             return;
         }
         

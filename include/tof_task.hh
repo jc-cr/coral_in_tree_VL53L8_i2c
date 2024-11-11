@@ -8,7 +8,10 @@
 #include "libs/base/gpio.h"
 
 // VL53L8CX implementation
+extern "C" {
 #include "vl53l8cx_api.h"
+}
+
 #include "platform.hpp"
 
 // C++ standard library
@@ -26,6 +29,7 @@ namespace coralmicro {
     static constexpr I2c kI2c = I2c::kI2c1;
     
     // Add configuration constants
+    static constexpr uint16_t kAddress = 0x29;
     static constexpr uint8_t kResolution = VL53L8CX_RESOLUTION_8X8;
     static constexpr uint8_t kRangingFrequency = 15; // Hz
     static constexpr uint8_t kIntegrationTime = 10;  // ms
