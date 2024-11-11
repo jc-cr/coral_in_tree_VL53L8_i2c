@@ -20,10 +20,20 @@ extern "C" {
 
 namespace coralmicro {
     bool init_gpio();
+
+    // Task
     void tof_task(void* parameters);
 
-    const char* getErrorString(uint8_t status);
-    void printSensorError(const char* operation, uint8_t status);
+    // Initialization
+    bool init_sensor(VL53L8CX_Configuration* dev);
+    bool init_gpio();
+
+    // Helper functions
+    const char* get_error_string(uint8_t status);
+    void print_sensor_error(const char* operation, uint8_t status);
+    void print_results(VL53L8CX_ResultsData* results);
+
+
 
     static constexpr Gpio kLpnPin = Gpio::kPwm0;
     static constexpr I2c kI2c = I2c::kI2c1;

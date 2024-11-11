@@ -3,6 +3,64 @@
 
 namespace coralmicro {
 
+    void print_results(VL53L8CX_ResultsData* results) {
+        // Print header with temperature
+        printf("\r\n=== VL53L8CX Sensor Reading (Temp: %d°C) ===\r\n\r\n", 
+            results->silicon_temp_degc);
+        
+        // Print column headers
+        printf("     ");
+        for(int col = 0; col < 8; col++) {
+            printf("  C%d   ", col);
+        }
+        printf("\r\n");
+        
+        // Print separator
+        printf("     ");
+        for(int col = 0; col < 8; col++) {
+            printf("------");
+        }
+        printf("\r\n");
+        
+        // Print each row
+        for(int row = 0; row < 8; row++) {
+            printf("R%d | ", row);
+            for(int col = 0; col < 8; col++) {
+                int zone = row * 8 + col;
+                
+                if(results->nb_target_detected[zone] == 0) {
+                    printf(" ---- ");
+                } else {
+                    // Only show distance in mm, padded to 4 digits
+                    printf("%5d ", results->distance_mm[zone]);
+                }
+            }
+            printf("|\r\n");
+        }
+        
+        // Print separator
+        printf("     ");
+        for(int col = 0; col < 8; col++) {
+            printf("------");
+        }
+        printf("\r\n\r\n");
+        
+        // Print statistics for valid measurements only
+        printf("Valid measurements (Status=5):\r\n");
+        for(uint8_t i = 0; i < kResolution; i++) {
+            if(results->nb_target_detected[i] > 0 && 
+            results->target_status[i] == 5) {
+                printf("Zone %2d: %4dmm (Signal: %4d)\r\n", 
+                    i, 
+                    results->distance_mm[i],
+                    results->signal_per_spad[i]);
+            }
+        }
+        printf("\r\n");  // Extra line for spacing between updates
+        
+        fflush(stdout);
+    }
+
     bool init_gpio() {
         printf("GPIO Power-on sequence starting...\r\n");
         
@@ -19,7 +77,7 @@ namespace coralmicro {
         return true;
     }
 
-    const char* getErrorString(uint8_t status) {
+    const char* get_error_string(uint8_t status) {
         switch(status) {
             case VL53L8CX_STATUS_OK:
                 return "No error";
@@ -44,17 +102,15 @@ namespace coralmicro {
         }
     }
 
-    void printSensorError(const char* operation, uint8_t status) {
+    void print_sensor_error(const char* operation, uint8_t status) {
         printf("Error during %s: [%d] %s\r\n", 
             operation, 
             status, 
-            getErrorString(status));
+            get_error_string(status));
         fflush(stdout);
     }
 
-    // In tof_task.cc, modify the initializeSensor function:
-
-    bool initializeSensor(VL53L8CX_Configuration* dev) {
+    bool init_sensor(VL53L8CX_Configuration* dev) {
         uint8_t status;
         uint8_t isAlive = 0;
         
@@ -64,7 +120,7 @@ namespace coralmicro {
         // Check if sensor is alive
         status = vl53l8cx_is_alive(dev, &isAlive);
         if (status != VL53L8CX_STATUS_OK || !isAlive) {
-            printSensorError("checking sensor alive", status);
+            print_sensor_error("checking sensor alive", status);
             return false;
         }
         printf("Sensor is alive\r\n");
@@ -75,7 +131,7 @@ namespace coralmicro {
         // Initialize sensor
         status = vl53l8cx_init(dev);
         if (status != VL53L8CX_STATUS_OK) {
-            printSensorError("sensor initialization", status);
+            print_sensor_error("sensor initialization", status);
             return false;
         }
         printf("Sensor initialized\r\n");
@@ -86,7 +142,7 @@ namespace coralmicro {
         // Set resolution
         status = vl53l8cx_set_resolution(dev, kResolution);
         if (status != VL53L8CX_STATUS_OK) {
-            printSensorError("setting resolution", status);
+            print_sensor_error("setting resolution", status);
             return false;
         }
         printf("Resolution set to 8x8\r\n");
@@ -97,7 +153,7 @@ namespace coralmicro {
         // Set ranging mode to continuous
         status = vl53l8cx_set_ranging_mode(dev, VL53L8CX_RANGING_MODE_CONTINUOUS);
         if (status != VL53L8CX_STATUS_OK) {
-            printSensorError("setting ranging mode", status);
+            print_sensor_error("setting ranging mode", status);
             return false;
         }
         printf("Ranging mode set to continuous\r\n");
@@ -107,7 +163,7 @@ namespace coralmicro {
         // Set ranging frequency
         status = vl53l8cx_set_ranging_frequency_hz(dev, kRangingFrequency);
         if (status != VL53L8CX_STATUS_OK) {
-            printSensorError("setting ranging frequency", status);
+            print_sensor_error("setting ranging frequency", status);
             return false;
         }
         printf("Ranging frequency set to %d Hz\r\n", kRangingFrequency);
@@ -117,7 +173,7 @@ namespace coralmicro {
         // Set integration time
         status = vl53l8cx_set_integration_time_ms(dev, kIntegrationTime);
         if (status != VL53L8CX_STATUS_OK) {
-            printSensorError("setting integration time", status);
+            print_sensor_error("setting integration time", status);
             return false;
         }
         printf("Integration time set to %d ms\r\n", kIntegrationTime);
@@ -126,20 +182,6 @@ namespace coralmicro {
         vTaskDelay(pdMS_TO_TICKS(50));
         
         return true;
-    }
-
-    void printResults(VL53L8CX_ResultsData* results) {
-        printf("\nSensor Temperature: %d°C\n", results->silicon_temp_degc);
-        
-        for (uint8_t i = 0; i < kResolution; i++) {
-            if (results->nb_target_detected[i] > 0) {
-                printf("Zone %2d: ", i);
-                printf("Targets=%d, ", results->nb_target_detected[i]);
-                printf("Distance=%4dmm, ", results->distance_mm[i]);
-                printf("Status=%3d, ", results->target_status[i]);
-                printf("Signal=%5d\n", results->signal_per_spad[i]);
-            }
-        }
     }
 
     void tof_task(void* parameters) {
@@ -179,7 +221,7 @@ namespace coralmicro {
         dev->platform = platform;
         
         
-        if (!initializeSensor(dev.get())) {
+        if (!init_sensor(dev.get())) {
             printf("Sensor initialization failed - exiting task\r\n");
             return;
         }
@@ -187,7 +229,7 @@ namespace coralmicro {
         // Start ranging
         status = vl53l8cx_start_ranging(dev.get());
         if (status != VL53L8CX_STATUS_OK) {
-            printSensorError("starting ranging", status);
+            print_sensor_error("starting ranging", status);
             return;
         }
         
@@ -214,12 +256,12 @@ namespace coralmicro {
             if (status == VL53L8CX_STATUS_OK && isReady) {
                 status = vl53l8cx_get_ranging_data(dev.get(), results.get());
                 if (status == VL53L8CX_STATUS_OK) {
-                    printResults(results.get());
+                    print_results(results.get());
                 } else {
-                    printSensorError("getting ranging data", status);
+                    print_sensor_error("getting ranging data", status);
                 }
             } else if (status != VL53L8CX_STATUS_OK) {
-                printSensorError("checking data ready", status);
+                print_sensor_error("checking data ready", status);
             }
             
             // Check stack usage periodically
@@ -235,6 +277,4 @@ namespace coralmicro {
             vTaskDelayUntil(&last_wake_time, frequency);
         }
     }
-
-
 } // namespace coralmicro
